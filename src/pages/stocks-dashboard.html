@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Stocks Dashboard</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous" />
+		<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+		<script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-app.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-firestore.js"></script>
+
+		<!-- React Production -->
+		<!-- -->
+		<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+		<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<!-- -->
+
+		<!-- React Development -->
+		<!--
+		<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+		<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		-->
+
+		<!-- <script type="text/babel" type="text/javascript" src="/index.js" crossorigin="anonymous" ></script> -->
+		<!-- <link rel="stylesheet" href="/index.css" crossorigin="anonymous" /> -->
+
+		<style>
+
+			/* General */
+
+			body {
+				padding-top: 100px;
+				padding-bottom: 200px;
+
+				background-color: black;
+				color: white;
+			}
+
+			.spacer {
+				height: 40px;
+			}
+
+
+
+			/* Table */
+
+			.table-row-header {
+				height: 60px;
+			}
+
+			.header-col {
+				margin-top: 18px;
+
+				font-size: 16px;
+				font-family: "San Francisco", sans-serif;
+				font-weight: 800;
+			}
+
+			.stock-row + .stock-row {
+				margin-top: 3px;
+			}
+
+			.stock-row {
+				height: 150px;
+				padding-top: 10px;
+				padding-bottom: 10px;
+			}
+
+			.stock-row-3_reference {
+				background-color: hsla(0, 0%, 1%, 1);
+			}
+
+			.stock-row-2_watchlist {
+				background-color: hsla(94, 100%, 2%, 1);
+			}
+
+			.stock-row-1_holding {
+				background-color: hsla(47, 93%, 14%, 1);
+			}
+
+			/* Stock Cell */
+			.stock-col {
+				height: 100%;
+			}
+
+			/* Stock Info */
+			.stock-name {
+				font-size: 14px;
+				font-family: "San Francisco", sans-serif;
+				font-weight: 800;
+
+				border-bottom: 1px solid hsla(0, 0%, 100%, 1);
+				margin-bottom: 6px;
+			}
+			.stock-isin {
+				font-family: "PT Mono", monospace;
+				font-size: 12px;
+			}
+			.stock-price-purchased {
+				font-family: "PT Mono", monospace;
+				font-size: 12px;
+			}
+			.stock-price-target {
+				font-family: "PT Mono", monospace;
+				font-size: 12px;
+			}
+			.stock-count {
+				font-family: "PT Mono", monospace;
+				font-size: 12px;
+			}
+
+			/* Stock Charts */
+			.stock-chart {
+				object-fit: contain;
+				max-height: 100%;
+			}
+
+
+
+			/* Modal */
+			div.modal-content {
+				background-color: hsla(0, 0%, 20%, 1);
+			}
+
+			button.close {
+				color: hsla(0, 0%, 100%, 1);
+				text-shadow: none;
+			}
+
+			h5.modal-title {
+
+			}
+
+
+		</style>
+
+		<script type="text/babel" type="text/javascript">
+
+			"use strict";
+
+			window.app = {
+				firebaseConfig: null,
+				db: null,
+				dbStockDataRef: null,
+				stockDataInitial: [],
+				// stockData: [],
+				stockData: {},
+				
+				sortFields: ["companyName"/*, "ISIN", "listItemType"*/],
+				sortIndices: {},
+				indexFields: ["companyName", "ISIN", "listItemType"], // purchaseAmount to sort after how much I invested
+				sortIndicesMulti: {"listItemType:companyName": {keys: ["listItemType", "companyName"], indexList: []}},
+				calculateSmallestOfType: null,
+				calculateSortIndex: null,
+
+				startToRender: function () { 
+					ReactDOM.render( React.createElement(ReactApp), document.querySelector('#react-root') );
+
+					window.app.logic.onInitAllModals();
+				},
+
+				logic: {
+					onInitAllModals: function () {
+						const n = window.app.modals.entities;
+						for (const i in n) {
+							window.app.modals.init({id: n[i].id});
+						}
+					},
+
+					onModalAddStockAddAndNew: function () {
+						console.log("onModaladdStockAddAndNew");
+
+						window.app.forms.addStock.submit();
+						window.app.forms.addStock.reset();
+					},
+
+
+					onModalAddStockAddAndClose: function () {
+						window.app.forms.addStock.submit();
+						window.app.forms.addStock.reset();
+						window.app.modals.addStock.close();
+					},
+
+					onOpenAddStock: function () {
+						window.app.modals.open({id: "modal-add-stock"});
+					},
+					
+					onCloseAddStock: function () {
+						window.app.modals.close({id: "modal-add-stock"});
+					}
+				},
+
+				modals: {
+					init: function (_) {
+						// get options
+						const modalObj = window.app.modals.entities[_.id];
+						$(modalObj.domId).modal(modalObj.options);
+					},
+					open: function (_) {
+						const modalObj = window.app.modals.entities[_.id];
+						$("#modal-add-stock").modal('show');
+					},
+					close: function (_) {
+						const modalObj = window.app.modals.entities[_.id];
+						$("#modal-add-stock").modal('hide');
+					},
+
+					entities: {
+						addStock: {
+							id: "addStock",
+							domId: "modal-add-stock",
+							options: {
+								backdrop: true, // true false "static"
+								keyboard: true, // close on Escape key
+								focus: true,
+								show: false
+							}
+						}
+					}
+				},
+
+				forms: {
+
+					reset: function (_) {
+						window.app.forms.addStock.state = window.app.forms.entities.addStock.initialState;
+					},
+					submit: function (_) {
+						// Save to database
+					},
+					// submitAndReset: function (_) {
+					// 	// Save
+					// 	// Reset
+					// },
+
+					eligibilityRules: {
+						perElement: {
+							ISIN: _ => typeof _ === "string"
+						},
+						logical: {
+
+						}
+					},
+
+					entities: {
+
+						addStock: {						
+							id: "addStock",
+							dbCollection: "finance.stocks.symbols",
+
+							instances: {
+								main: {
+									id: "main",
+									state: {}
+								}
+							},
+
+							initialState: {
+								ISIN: "",
+								companyName: "",
+								listItemType: "2_watchlist",
+								note: "",
+								holdingInformation: false,
+								purchaseCount: null,
+								purchasePrice: null,
+								targetPrice: null,
+								tradingCountry: null,
+								tradingCurrency: null,
+								tradingPlatform: null
+							}
+						}
+					}
+				}
+			};
+
+			/*
+			window.app.calculateMaxOfDataType = function (_) {
+				switch (typeof _) {
+					case "number": return Number.POSITIVE_INFINITY; break;
+					case "string": return String.fromCodePoint(0xFFFFF); break;
+					default: return null;
+				};
+			};
+			*/
+
+
+			window.app.calculateSortIndex = function (_) {
+				// let sortIndex = []; // "ID_72", "ID_28", "ID_01", "ID_93"
+				let sortData = [];
+				// const dataKeys = Object.keys(_.data);
+				// const dataValues = Object.
+				// const dataLength = dataKeys.length;
+				for (let k in _.data) {
+					sortData.push({
+						key: k,
+						value: _.data[k][_.sortField]
+					});
+				}
+
+				sortData.sort((a,b) => a.value > b.value);
+
+				console.log(_.data, _.sortField, sortData);
+
+				return sortData;
+			}
+
+
+
+			window.app.firebaseConfig = {
+				apiKey:				"AIzaSyDuEZNckX5hxdHHnuLLzB9BY5iEyDUF2rU",
+				authDomain:			"xanderia-e7b8f.firebaseapp.com",
+				databaseURL:		"https://xanderia-e7b8f.firebaseio.com",
+				projectId:			"xanderia-e7b8f",
+				storageBucket:		"xanderia-e7b8f.appspot.com",
+				messagingSenderId:	"815820095221",
+				appId:				"1:815820095221:web:8a4f2da690068d34c34fbc"
+			};
+
+			firebase.initializeApp(window.app.firebaseConfig);
+
+			window.app.db = firebase.firestore();
+
+			window.app.dbStockDataRef = window.app.db.collection("finance.stocks.symbols");
+
+			// Initialize data
+			window.app.stockDataInitial = [
+				// { "companyName":"AMD","ISIN":"US0079031078","purchasePrice":46.99,"purchaseCount":500,"targetPrice":55.00,"listItemType":"holding","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Apple","ISIN":"US0378331005","purchasePrice":284.05,"purchaseCount":80,"targetPrice":300,"listItemType":"holding","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Berkshire Hathaway","ISIN":"US0846707026","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Facebook","ISIN":"US30303M1027","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"watchlist","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Google","ISIN":"US02079K1079","purchasePrice":1312.60,"purchaseCount":15,"targetPrice":1400,"listItemType":"holding","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Lockheed Martin","ISIN":"US5398301094","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Netflix","ISIN":"US64110L1061","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"watchlist","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"PayPal","ISIN":"US70450Y1038","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"watchlist","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Tesla","ISIN":"US88160R1014","purchasePrice":776.90,"purchaseCount":14,"targetPrice":null,"listItemType":"holding","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Wirecard","ISIN":"DE0007472060","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Slack","ISIN":"US83088V1026","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Snap","ISIN":"US83304A1060","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Square","ISIN":"US8522341036","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Shopify","ISIN":"CA82509L1076","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Uber","ISIN":"US90353T1007","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" },
+				// { "companyName":"Canopy Growth","ISIN":"CA1380351009","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"reference","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" }
+				// { "companyName":"Twitter","ISIN":"US90184L1026","purchasePrice":null,"purchaseCount":null,"targetPrice":null,"listItemType":"2_watchlist","tradingCountry":"DE","tradingCurrency":"EUR","tradingPlatform":"Tradegate" }
+			];
+
+			for (const i of window.app.stockDataInitial) {
+				window.app.dbStockDataRef.doc().set(i);
+				console.log(`Stock Symbol added: ${i.companyName} (${i.ISIN})`);
+			}
+
+
+
+			window.app.dbStockDataRef.orderBy("listItemType").orderBy("companyName").get().then((data) => {
+				data.forEach((doc) => {
+					// window.app.stockData.push(doc.data());
+					window.app.stockData[doc.id] = doc.data();
+				});
+
+				// for (const i of window.app.sortFields) {
+				// 	window.app.sortIndices[i] = window.app.calculateSortIndex({data: window.app.stockData, sortField: i});
+				// }
+
+				console.log({app: window.app});
+
+				window.app.startToRender();
+			});
+
+
+			// Autofocus Modal
+			// $('#myModal').on('shown.bs.modal', function () {
+			// 	$('#myInput').trigger('focus');
+			// });
+
+
+
+			function StockRow (_) {
+				return(
+					<div className={`row stock-row stock-row-${_.listItemType} justify-content-start`}>
+						<div className="col-1 stock-col">
+							<div className="stock-name" title={`Stock Name: ${_.companyName}`}>{_.companyName}</div>
+							<div className="stock-isin" title={`Stock ISIN: ${_.ISIN}`}>{_.ISIN}</div>
+							{ _.purchasePrice && <div className="stock-price-purchased" title={`Purchase Price: ${_.purchasePrice.toFixed(2)}${_.tradingCurrency}`}>{_.purchasePrice.toFixed(2)}{_.tradingCurrency}</div> }
+							{ _.targetPrice && <div className="stock-price-target" title={`Target Price: ${_.targetPrice.toFixed(2)}${_.tradingCurrency}`}>{_.targetPrice.toFixed(2)}{_.tradingCurrency}</div> }
+							{ _.purchaseCount && <div className="stock-count" title={`Purchased Stock Count: ${_.purchaseCount}x`}>{_.purchaseCount}x</div> }
+						</div>
+						
+						<div className="col-2 stock-col"><img className="stock-chart" src={`https://www.tradegate.de/images/charts/jahr/${_.ISIN}.png`} /></div>
+						<div className="col-2 stock-col"><img className="stock-chart" src={`https://www.tradegate.de/images/charts/monat6/${_.ISIN}.png`} /></div>
+						<div className="col-2 stock-col"><img className="stock-chart" src={`https://www.tradegate.de/images/charts/monat/${_.ISIN}.png`} /></div>
+						<div className="col-2 stock-col"><img className="stock-chart" src={`https://www.tradegate.de/images/charts/woche/${_.ISIN}.png`} /></div>
+						<div className="col-2 stock-col"><img className="stock-chart" src={`https://www.tradegate.de/images/charts/intraday/${_.ISIN}.png`} /></div>
+
+						<div className="col-1 stock-col">
+							<div className="stock-name" title={`Stock Name: ${_.companyName}`}>{_.companyName}</div>
+							<div className="stock-isin" title={`Stock ISIN: ${_.ISIN}`}>{_.ISIN}</div>
+							{ _.purchasePrice && <div className="stock-price-purchased" title={`Purchase Price: ${_.purchasePrice.toFixed(2)}${_.tradingCurrency}`}>{_.purchasePrice.toFixed(2)}{_.tradingCurrency}</div> }
+							{ _.targetPrice && <div className="stock-price-target" title={`Target Price: ${_.targetPrice.toFixed(2)}${_.tradingCurrency}`}>{_.targetPrice.toFixed(2)}{_.tradingCurrency}</div> }
+							{ _.purchaseCount && <div className="stock-count" title={`Purchased Stock Count: ${_.purchaseCount}x`}>{_.purchaseCount}x</div> }
+						</div>
+					</div>
+				);
+			}
+
+
+
+
+			function TextInput (_) {
+				if (_.type === null) {
+					_.type = "text";
+				}
+				// if (_.defaultValue === null) {
+				// 	_.defaultValue = "";
+				// }
+
+				return(
+					<div class="form-group">
+						<label for={_.id}>{_.label}</label>
+						<input type={_.type} class="form-control" name={_.id} id={_.id} value={_.value} onChange={_.onChange} />
+					</div>
+				);
+			}
+
+
+			function TextInputRow (_) {
+				if (_.type === null) {
+					_.type = "text";
+				}
+
+				if (_.autocomplete === null) {
+					_.autocomplete = "off";
+				}
+				// if (_.defaultValue === null) {
+				// 	_.defaultValue = "";
+				// }
+
+				return(
+					<div class="form-group row">
+						<label for={_.id} class="col-sm-5 col-form-label">{_.label}</label>
+						<div class="col-sm-7">
+							<input type={_.type} class="form-control" name={_.id} value={_.value} autocomplete={_.autocomplete} placeholder={_.placeholder} onChange={_.onChange} />
+						</div>
+					</div>
+				);
+			}
+
+
+
+			function CheckboxInput (_) {
+				if (_.type === null) {
+					_.type = "text";
+				}
+
+				return(
+					<div class="form-group form-check">
+						<input type="checkbox" class="form-check-input" name={_.id} id={_.id} value={_.value} onChange={_.onChange} />
+						<label class="form-check-label" for={_.id}>{_.label}</label>
+					</div>
+				);
+			}
+
+
+
+			function CheckboxInputRow (_) {
+				if (_.type === null) {
+					_.type = "text";
+				}
+
+				return(
+					<div class="form-group row">
+						<label class="form-check-label" for={_.id} class="col-sm-5 col-form-label">{_.label}</label>
+						<div class="col-sm-7">
+							<input type="checkbox" class="" name={_.id} id={_.id} style={{marginTop: 11}} onChange={_.onChange} />
+						</div>
+					</div>
+				);	
+			}
+
+
+
+			function ButtonGroupInput (_) {
+				return(
+					<div class="form-group form-check">
+						<label class="form-check-label" for={_.id}>{_.label}</label>
+						<div class="btn-group btn-group-sm" name={_.id} role="group" aria-label={_.label} id={_.id}>
+							{ _.keys.map( ([label, key]) => <button type="button" class="btn btn-secondary" value={key} id={_.id + key}>{label}</button> ) }
+						</div>
+					</div>
+				);
+			}
+
+
+
+			function ButtonGroupInputRow (_) {
+				return(
+					<div class="form-group row">
+						<label class="form-check-label" for={_.id} class="col-sm-5 col-form-label">{_.label}</label>
+						<div class="col-sm-7">
+							<div class="btn-group btn-group-sm" role="group" aria-label={_.label} name={_.id} id={_.id} style={{marginTop: 4}}>
+								{ _.keys.map( ([label, key]) => <button type="button" class="btn btn-secondary" value={key} id={_.id + key}>{label}</button> ) }
+							</div>
+						</div>
+					</div>
+				);
+			}
+
+
+
+			function DropdownRow (_) {
+				return (
+					<div class="form-group row">
+						<label for={_.id} class="col-sm-5 col-form-label">{_.label}</label>
+						<div class="col-sm-7">
+							<select class="form-control" id={_.id} name={_.id} value={_.value} onChange={_.onChange} >
+								{ _.options.map( (x) => <option value={x[1]}>{x[0]}</option> ) }
+							</select>
+						</div>
+					</div>
+				);
+			}
+
+
+
+			function Spacer (_) {
+				return (
+					<div class="spacer">
+					</div>
+				);
+			}
+
+
+
+			
+
+
+			function FormAddStock() {
+				const [formState, setFormState] = React.useState(window.app.forms.entities.addStock.initialState);
+
+				function onChangeFormAddStock(_) {
+					// console.log("onChangeFormAddStock", {target: _.target, formState, setFormState, stateAddition: ({ [_.target.name]: _.target.value }) });
+					const newState = Object.assign( Object.assign({}, formState), { [_.target.name]: _.target.value } );
+
+					window.app.forms.addStock.state = newState;
+
+					setFormState( newState );
+				}
+
+				return (
+					<form>
+						<TextInputRow label="ISIN" id="ISIN" value={formState.isin} autocomplete="off" onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Name" id="companyName" value={formState.companyName} autocomplete="off" onChange={onChangeFormAddStock}/>
+
+						{ /* <ButtonGroupInputRow label="List Type" id="listItemType" keys={[["Holding", "1_holding"], ["Watchlist", "2_watchlist"], ["Reference", "3_reference"]]} value={formState.listItemType} /> */ }
+						<DropdownRow label="List Type" id="listItemType" options={[["(1) Holding", "1_holding"], ["(2) Watchlist", "2_watchlist"], ["(3) Reference", "3_reference"]]} value={formState.listItemType} onChange={onChangeFormAddStock}/>
+
+						<TextInputRow label="Note" id="note" value={formState.note} autocomplete="off" onChange={onChangeFormAddStock}/>
+
+						<Spacer />
+
+						<CheckboxInputRow label="Holding Information" id="holdingInformation" value={formState.holdingInformation} onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Purchase Count" id="purchaseCount" type="number" autocomplete="off" placeholder="100" value={formState.purchaseCount} onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Purchase Price" id="purchasePrice" type="number" autocomplete="off" placeholder="21.97" value={formState.purchasePrice} onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Target Price" id="targetPrice" type="number" autocomplete="off" placeholder="25.50" value={formState.targetPrice} onChange={onChangeFormAddStock}/>
+
+						<Spacer />
+
+						<TextInputRow label="Country" id="tradingCountry" defaultValue="DE" autocomplete="country" value={formState.tradingCountry} onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Currency" id="tradingCurrency" defaultValue="EUR" autocomplete="off" value={formState.tradingCurrency} onChange={onChangeFormAddStock}/>
+						<TextInputRow label="Platform" id="tradingPlatform" defaultValue="Tradegate" autocomplete="off" value={formState.tradingPlatform} onChange={onChangeFormAddStock}/>
+					</form>
+				);
+			}
+
+
+
+
+			function ReactApp () {
+				return(
+					<React.Fragment>
+						<nav className="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+							<a className="navbar-brand" href="#">Stocks Dashboard</a>
+							<button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+								<span className="navbar-toggler-icon"></span>
+							</button>
+
+							<div className="collapse navbar-collapse" id="navbarSupportedContent">
+								<ul className="navbar-nav mr-auto">
+									<li className="nav-item active">
+										<a className="nav-link" href="#">Home <span className="sr-only">(current)</span></a>
+									</li>
+									<li className="nav-item">
+										<a className="nav-link" href="#">Link</a>
+									</li>
+									<li className="nav-item dropdown">
+										<a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+											Dropdown
+										</a>
+										<div className="dropdown-menu" aria-labelledby="navbarDropdown">
+											<a className="dropdown-item" href="#">Action</a>
+											<a className="dropdown-item" href="#">Another action</a>
+											<div className="dropdown-divider"></div>
+											<a className="dropdown-item" href="#">Something else here</a>
+										</div>
+									</li>
+									<li className="nav-item">
+										<a className="nav-link disabled" href="#" tabIndex="-1" aria-disabled="true">Disabled</a>
+									</li>
+								</ul>
+								<form className="form-inline my-2 my-lg-0">
+									{ /* <input className="form-control mr-sm-2" type="search" placeholder="ISIN" aria-label="Search" /> */ }
+									<button className="btn btn-outline-success my-2 my-sm-0" type="button" onClick={window.app.logic.onOpenAddStock}>Add Stock</button>
+								</form>
+							</div>
+						</nav>
+
+						<div className="container-fluid">
+							<div className="row table-row-header bg-dark text-light">
+								<div className="col-1 header-col"><div>Name</div></div>
+								<div className="col-2 header-col"><div>Year</div></div>
+								<div className="col-2 header-col"><div>6 Months</div></div>
+								<div className="col-2 header-col"><div>Month</div></div>
+								<div className="col-2 header-col"><div>Week</div></div>
+								<div className="col-2 header-col"><div>Intraday</div></div>
+								
+							</div>
+
+							{ Object.keys(window.app.stockData).map( (i) =>
+								<StockRow
+									key={window.app.stockData[i].companyName}
+									companyName={window.app.stockData[i].companyName}
+									ISIN={window.app.stockData[i].ISIN}
+									purchasePrice={window.app.stockData[i].purchasePrice}
+									tradingCurrency={window.app.stockData[i].tradingCurrency}
+									purchaseCount={window.app.stockData[i].purchaseCount}
+									listItemType={window.app.stockData[i].listItemType}
+								/>
+							) }
+
+						</div>
+
+
+						{/* Vertically centered modal */}
+						<div class="modal fade" id="modal-add-stock" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+							<div class="modal-dialog modal-dialog-centered"> {/* modal-sm */}
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title" id="exampleModalLabel">Add Symbol</h5>
+										<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+									</div>
+
+									<div class="modal-body">
+										<FormAddStock />
+									</div>
+
+									<div class="modal-footer">
+										{/*<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>*/}
+										<button type="button" class="btn btn-outline-success" onClick={window.app.logic.onModalAddStockAddAndNew}>Add and New</button>
+										<button type="button" class="btn btn-success" onClick={window.app.logic.onModalAddStockAddAndClose}>Add and Close</button>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</React.Fragment>
+				);
+			};
+
+
+		</script>
+
+	</head>
+
+	<body>
+		<div id="react-root">
+		</div>
+	</body>
+</html>
