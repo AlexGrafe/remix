@@ -39,8 +39,9 @@ module.exports = {
         apiURL: process.env.REMIX_STRAPI_URL,// "http://localhost:1337",
         contentTypes: [
           // List of the Content Types you want to be able to request from Gatsby.
-          "article",
-          "category",
+          "content",
+          "section",
+          "config-item",
         ],
         queryLimit: 1000,
       },

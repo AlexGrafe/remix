@@ -10,7 +10,15 @@ import PropTypes from "prop-types"
 import { useStaticQuery, graphql } from "gatsby"
 
 import Header from "./header"
+// import Footer from "./footer"
 import "./layout.css"
+
+// Bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css';
+import "./remix.css"
+import Container from 'react-bootstrap/Container';
+
+
 
 const Layout = ({ children }) => {
   const data = useStaticQuery(graphql`
@@ -20,29 +28,40 @@ const Layout = ({ children }) => {
           title
         }
       }
+
+      allStrapiConfigItem {
+        edges {
+          node {
+            id
+            key
+            value
+          }
+        }
+      }
     }
   `)
 
+  const configData = {};
+  for (let i of data.allStrapiConfigItem.edges) {
+    configData[i.node.key] = i.node.value;
+  }
+
+  // console.log({configData});
+
   return (
     <>
-      <Header siteTitle={data.site.siteMetadata.title} />
-      <div
-        style={{
-          margin: `0 auto`,
-          maxWidth: 960,
-          padding: `0 1.0875rem 1.45rem`,
-        }}
-      >
-        <main>{children}</main>
-        <footer>
-          © {new Date().getFullYear()}, Built with
-          {` `}
-          <a href="https://www.gatsbyjs.org">Gatsby</a>
-        </footer>
-      </div>
+      <Header siteTitle={data.site.siteMetadata.title} configData={configData} />
+      
+      <Container fluid="true" style={{height: "100vh", overflow: "hidden"}}>
+        <main className="h-100 d-flex flex-column">{children}</main>
+      </Container>
+
+
     </>
   )
 }
+
+// <Footer configData={configData} />
 
 Layout.propTypes = {
   children: PropTypes.node.isRequired,
