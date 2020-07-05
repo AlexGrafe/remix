@@ -3468,6 +3468,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ace-builds@npm:^1.4.11, ace-builds@npm:^1.4.6":
+  version: 1.4.11
+  resolution: "ace-builds@npm:1.4.11"
+  checksum: d2376746a126b2a996c3dfc407ca85d5bc1761975b872a998377deb5a549efcb4a6145bd7f35b2fc06bc12f18ac5de7eac9730baf8a5d1b595fc5b3df5489a90
+  languageName: node
+  linkType: hard
+
 "acorn-dynamic-import@npm:^4.0.0":
   version: 4.0.0
   resolution: "acorn-dynamic-import@npm:4.0.0"
@@ -7080,6 +7087,13 @@ __metadata:
     tmp: ^0.0.33
     tslib: ^1.10.0
   checksum: 178bf39f64acf51457c01437150e0f21e0f66252124fa488eaca29bbcc34ca5b2f5f1c9e01b92cb9cbdebb7abceaeb021dce622b066a50f1edea43f1f1b60983
+  languageName: node
+  linkType: hard
+
+"diff-match-patch@npm:^1.0.4":
+  version: 1.0.5
+  resolution: "diff-match-patch@npm:1.0.5"
+  checksum: 4694f40dbfd725e6ceaaa94c4779b60ceaf2d3b382229118310154d469f983d665ecfddae3c5c402bc5bb51930db63a1d27bd30c5d91e38de13f9d8054f2f4ae
   languageName: node
   linkType: hard
 
@@ -12674,6 +12688,13 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"lodash.get@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "lodash.get@npm:4.4.2"
+  checksum: 447e575e3caa5131ef44e5a0c135b1614f3c937d86b3be0568f9da7b0fd015010af3b6b4e41edf6e2698c9ce2dcc061ca71b31f274f799c991dceb018be16e4f
+  languageName: node
+  linkType: hard
+
 "lodash.isequal@npm:^4.5.0":
   version: 4.5.0
   resolution: "lodash.isequal@npm:4.5.0"
@@ -15983,6 +16004,22 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"react-ace@npm:^9.1.1":
+  version: 9.1.1
+  resolution: "react-ace@npm:9.1.1"
+  dependencies:
+    ace-builds: ^1.4.6
+    diff-match-patch: ^1.0.4
+    lodash.get: ^4.4.2
+    lodash.isequal: ^4.5.0
+    prop-types: ^15.7.2
+  peerDependencies:
+    react: ^0.13.0 || ^0.14.0 || ^15.0.1 || ^16.0.0
+    react-dom: ^0.13.0 || ^0.14.0 || ^15.0.1 || ^16.0.0
+  checksum: 01127fe455d0985094e7d6f698e812b88dc0b4cd367659ae3bea5d55cee5546cfce313be45d805a1982955292f4b177e92510a5692bc16357771259ad0432fde
+  languageName: node
+  linkType: hard
+
 "react-bootstrap@npm:^1.0.1":
   version: 1.0.1
   resolution: "react-bootstrap@npm:1.0.1"
@@ -16639,6 +16676,7 @@ fsevents@~2.1.2:
   version: 0.0.0-use.local
   resolution: "remix@workspace:."
   dependencies:
+    ace-builds: ^1.4.11
     bootstrap: ^4.5.0
     dotenv: ^8.2.0
     gatsby: ^2.23.3
@@ -16654,6 +16692,7 @@ fsevents@~2.1.2:
     prettier: 2.0.5
     prop-types: ^15.7.2
     react: ^16.12.0
+    react-ace: ^9.1.1
     react-bootstrap: ^1.0.1
     react-dom: ^16.12.0
     react-helmet: ^6.1.0

@@ -18,7 +18,7 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import FormControl from 'react-bootstrap/FormControl';
 import InputGroup from 'react-bootstrap/InputGroup';
-import Form from 'react-bootstrap/Form';
+// import Form from 'react-bootstrap/Form';
 import Table from 'react-bootstrap/Table';
 
 
@@ -30,11 +30,11 @@ const EditButtons = ({id}) => {
 	return (
 		<ButtonToolbar aria-label="Toolbar with button groups">
 			<ButtonGroup className="mr-2" aria-label="First group" size="sm">
-				<Button variant="outline-secondary"><Icon.CloudDownload />Open</Button>
+				<Button variant="secondary"><Icon.CloudDownload />Open</Button>
 			</ButtonGroup>
 
 			<ButtonGroup className="mr-2" aria-label="Third group" size="sm">
-				<DropdownButton variant="outline-secondary" as={ButtonGroup} title="Download" size="sm">
+				<DropdownButton variant="secondary" as={ButtonGroup} title="Download" size="sm">
 					<Dropdown.Item>Everything (ZIP)</Dropdown.Item>
 					<Dropdown.Divider />
 					<Dropdown.Item>SDD: PDF</Dropdown.Item>
@@ -48,7 +48,7 @@ const EditButtons = ({id}) => {
 			</ButtonGroup>
 
 			<ButtonGroup className="mr-2" aria-label="Second group" size="sm">
-				<Button variant="outline-danger"><Icon.FileTimes />Delete</Button>
+				<Button variant="danger"><Icon.FileTimes />Delete</Button>
 			</ButtonGroup>
 
 		</ButtonToolbar>
@@ -67,10 +67,10 @@ const IndexPage = ({data}) => (
 			<Table striped="true" hover="true" borderless="true" variant="dark" responsive="true">
 				<thead>
 					<tr>
-						<th style={{width: "20%"}}>Name</th>
-						<th style={{width: "15%"}}>Status</th>
-						<th style={{width: "17%"}}>Author</th>
-						<th style={{width: "18%"}}>Created at</th>
+						<th style={{width: "19%"}}>Name</th>
+						<th style={{width: "12%"}}>Status</th>
+						<th style={{width: "16%"}}>Author</th>
+						<th style={{width: "17%"}}>Created at</th>
 						<th></th>
 					</tr>
 					<tr>
@@ -81,14 +81,13 @@ const IndexPage = ({data}) => (
 							</InputGroup>
 						</th>
 						<th>
-							<Form.Control size="md" as="select">
-								<option>All</option>
-								<optgroup label="⍑ Filter by">
-									<option>Release</option>
-									<option>WIP</option>
-									<option>Draft</option>
-								</optgroup>
-							</Form.Control>
+							<DropdownButton variant="outline-secondary" as={ButtonGroup} title="Filter by Status" size="md">
+								<Dropdown.Item>All</Dropdown.Item>
+								<Dropdown.Header>Filter</Dropdown.Header>
+								<Dropdown.Item>Release</Dropdown.Item>
+								<Dropdown.Item>WIP</Dropdown.Item>
+								<Dropdown.Item>Draft</Dropdown.Item>
+							</DropdownButton>
 						</th>
 						<th>
 							<InputGroup>

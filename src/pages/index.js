@@ -111,9 +111,9 @@ const IndexPage = ({data}) => {
 		}
 	};
 
-	[f.formState.parameters.state, f.formState.parameters.setState] = useState({})
-	[f.formState.sections.state, f.formState.sections.setState] = useState({})
-	[f.formState.options.state, f.formState.options.setState] = useState({})
+	[f.formState.parameters.state, f.formState.parameters.setState] = useState({});
+	[f.formState.sections.state, f.formState.sections.setState] = useState({});
+	[f.formState.options.state, f.formState.options.setState] = useState({});
 
 	console.log({f});
 
@@ -215,7 +215,7 @@ const IndexPage = ({data}) => {
 				<Container className="mb-5">
 
 					<Dropdown className="btn-group mr-2">
-						<Dropdown.Toggle variant="outline-secondary"><Icon.Template />Template</Dropdown.Toggle>
+						<Dropdown.Toggle variant="secondary"><Icon.Template />Template</Dropdown.Toggle>
 
 						<Dropdown.Menu>
 							<Dropdown.Item>Merchant (Braintree)</Dropdown.Item>
@@ -234,15 +234,15 @@ const IndexPage = ({data}) => {
 							<Dropdown.Item>PSP</Dropdown.Item>
 						</Dropdown.Menu>
 					</Dropdown>
-					<Button variant="outline-secondary" className="mr-4"><Icon.Download />Import</Button>
+					<Button variant="secondary" className="mr-4"><Icon.Download />Import</Button>
 
-					<Button variant="outline-success" className="mr-2"><Icon.Upload />Export</Button>
-					<Button variant="outline-success" className="mr-2" onClick={() => modalEditDisplaySetState(true)}><Icon.FileEdit />Edit</Button>
-					<Button variant="outline-success" className="mr-2" onClick={() => modalSaveDisplaySetState(true)}><Icon.CloudUpload />Save</Button>
-					<Button variant="outline-success" className="mr-2" onClick={() => modalSaveDisplaySetState(true)}><Icon.CloudUpload />Save As …</Button>
+					<Button variant="success" className="mr-2"><Icon.Upload />Export</Button>
+					<Button variant="success" className="mr-2" onClick={() => modalEditDisplaySetState(true)}><Icon.FileEdit />Edit</Button>
+					<Button variant="success" className="mr-2" onClick={() => modalSaveDisplaySetState(true)}><Icon.CloudUpload />Save</Button>
+					<Button variant="success" className="mr-2" onClick={() => modalSaveDisplaySetState(true)}><Icon.CloudUpload />Save As …</Button>
 
 					<Dropdown className="btn-group mr-2">
-						<Dropdown.Toggle variant="outline-success"><Icon.FileDownload />Download</Dropdown.Toggle>
+						<Dropdown.Toggle variant="success"><Icon.FileDownload />Download</Dropdown.Toggle>
 
 						<Dropdown.Menu>
 							<Dropdown.Item>Everything (ZIP)</Dropdown.Item>
@@ -261,7 +261,7 @@ const IndexPage = ({data}) => {
 		</Row>
 
 		<Row id="options-and-preview-row" style={{flex: 1, overflowY: "scroll"}}>
-			<Col id="document-set-parameters" className="pl-4" style={{flex: 2, backgroundColor: "hsla(100, 30%, 100%, 1.0)"}}>
+			<Col id="document-set-parameters" className="pl-4" style={{flex: 2}}>
 				<h3 className="mb-4" style={{borderBottom: "1px solid black", paddingBottom: 7}}>Parameters</h3>
 
 				<Form>
@@ -274,7 +274,7 @@ const IndexPage = ({data}) => {
 
 
 
-			<Col id="document-set-sections" style={{flex: 1, backgroundColor: "hsla(200, 30%, 100%, 1.0)"}}>
+			<Col id="document-set-sections" style={{flex: 1}}>
 				<h3 className="mb-4" style={{borderBottom: "1px solid black", paddingBottom: 7}}>Sections</h3>
 
 				<h5>Authentication</h5>
@@ -354,7 +354,7 @@ const IndexPage = ({data}) => {
 
 
 
-			<Col id="document-set-options" style={{flex: 1, backgroundColor: "hsla(300, 30%, 100%, 1.0)"}}>
+			<Col id="document-set-options" style={{flex: 1}}>
 				<h3 className="mb-4" style={{borderBottom: "1px solid black", paddingBottom: 7}}>Options</h3>
 
 				<h5>Partner Type</h5>
@@ -404,11 +404,11 @@ const IndexPage = ({data}) => {
 
 
 
-			<Col id="document-preview-col" style={{flex: 2, backgroundColor: "hsla(0, 30%, 100%, 1.0)"}}>
+			<Col id="document-preview-col" style={{flex: 2}}>
 				<Row style={{height: "70px"}}>
 					<Col style={{flex: 1}}><h3 className="mb-5" style={{borderBottom: "1px solid black", paddingBottom: 7}}>Preview</h3></Col>
 					<Col style={{flex: 2}}>
-						<DropdownButton variant="outline-secondary" as={ButtonGroup} title="Document Type" size="md">
+						<DropdownButton variant="secondary" as={ButtonGroup} title="Document Type" size="md">
 							<Dropdown.Item>SDD: PDF</Dropdown.Item>
 							<Dropdown.Item>SDD: HTML</Dropdown.Item>
 							<Dropdown.Item>Certification</Dropdown.Item>

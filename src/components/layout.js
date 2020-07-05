@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
       <Header siteTitle={data.site.siteMetadata.title} configData={configData} />
       
       <Container fluid="true" style={{height: "100vh", overflow: "hidden"}}>
-        <main className="h-100 d-flex flex-column">{children}</main>
+        <main className="h-100 d-flex flex-column bg-dark text-light">{children}</main>
       </Container>
 
 
